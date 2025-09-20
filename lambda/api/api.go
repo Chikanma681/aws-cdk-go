@@ -8,10 +8,10 @@ import (
 )
 
 type ApiHandler struct {
-	dbStore *database.DynamoDBClient
+	dbStore database.UserStore
 }
 
-func NewApiHandler(dbStore *database.DynamoDBClient) ApiHandler {
+func NewApiHandler(dbStore database.UserStore) ApiHandler {
 	return ApiHandler{
 		dbStore: dbStore,
 	}
@@ -31,7 +31,6 @@ func (api ApiHandler) RegisterUser(ctx context.Context, event types.RegisterUser
 		return fmt.Errorf("user with username %s already exists", event.Username)
 	}
 
-	// Insert the new user
 	err = api.dbStore.InsertUser(ctx, event)
 	if err != nil {
 		return fmt.Errorf("error creating user: %w", err)

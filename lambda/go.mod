@@ -1,6 +1,8 @@
 module lambda-func
 
-go 1.23.0
+go 1.24.0
+
+toolchain go1.24.7
 
 require (
 	github.com/aws/aws-lambda-go v1.49.0
@@ -22,4 +24,5 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.34.4 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.38.4 // indirect
 	github.com/aws/smithy-go v1.23.0 // indirect
+	golang.org/x/crypto v0.42.0 // indirect
 )
