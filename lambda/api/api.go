@@ -2,9 +2,13 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"lambda-func/database"
 	"lambda-func/types"
+	"net/http"
+
+	"github.com/aws/aws-lambda-go/events"
 )
 
 type ApiHandler struct {
@@ -17,24 +21,45 @@ func NewApiHandler(dbStore database.UserStore) ApiHandler {
 	}
 }
 
-func (api ApiHandler) RegisterUser(ctx context.Context, event types.RegisterUser) error {
-	if event.Username == "" || event.Password == "" {
-		return fmt.Errorf("username and password are required")
+func (api ApiHandler) RegisterUser(event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+
+	var registerUser types.RegisterUser
+
+	err := json.Unmarshal([]byte(event.Body), &registerUser)
+	if err != nil {
+		return events.APIGatewayProxyResponse{
+			StatusCode: 400,
+			Body:       "Invalid request body",
+		}, err
 	}
 
-	userExists, err := api.dbStore.DoesUserExist(ctx, event.Username)
+
+	if registerUser.Username == "" || registerUser.Password == "" {
+		return events.APIGatewayProxyResponse{
+			StatusCode: 400,
+			Body:       "Username and password are required",
+		}, nil
+	}
+
+	ctx := context.Background()
+
+	userExists, err := api.dbStore.DoesUserExist(ctx, registerUser.Username)
 	if err != nil {
-		return fmt.Errorf("error checking if user exists: %w", err)
+		return events.APIGatewayProxyResponse{
+			StatusCode: 500,
+			Body:       "Internal server error",
+		}, err
 	}
 
 	if userExists {
-		return fmt.Errorf("user with username %s already exists", event.Username)
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusConflict,
+			Body:       "User already exists",
+		}, err
 	}
 
-	err = api.dbStore.InsertUser(ctx, event)
-	if err != nil {
-		return fmt.Errorf("error creating user: %w", err)
-	}
-
-	return nil
+	return events.APIGatewayProxyResponse{
+		Body:       "Internal Server Error",
+		StatusCode: http.StatusInternalServerError,
+	}, fmt.Errorf("failed to register user")
 }
